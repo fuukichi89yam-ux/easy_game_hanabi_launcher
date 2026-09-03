@@ -31,7 +31,6 @@
         .font-serif-jp {
             font-family: 'Yuji Syuku', serif;
         }
-        /* Custom scrollbar hidden */
         ::-webkit-scrollbar {
             display: none;
         }
@@ -41,12 +40,25 @@
         .glow-box {
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
+        /* Custom Speech Bubble Animation */
+        @keyframes bubbleFloat {
+            0% { transform: scale(0.3) translateY(20px); opacity: 0; }
+            20% { transform: scale(1.1) translateY(-10px); opacity: 1; }
+            80% { transform: scale(1) translateY(-25px); opacity: 1; }
+            100% { transform: scale(0.9) translateY(-40px); opacity: 0; }
+        }
+        .speech-bubble {
+            animation: bubbleFloat 2.2s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative overflow-hidden flex flex-col justify-between">
 
     <!-- Game Canvas -->
     <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0 cursor-pointer"></canvas>
+
+    <!-- Speech Bubbles Layer -->
+    <div id="speechLayer" class="absolute inset-0 z-10 pointer-events-none overflow-hidden"></div>
 
     <!-- UI Overlay Area -->
     <div id="uiContainer" class="relative z-10 w-full h-full pointer-events-none flex flex-col justify-between p-4 md:p-6">
@@ -89,12 +101,18 @@
         <div id="inGameControls" class="w-full max-w-2xl mx-auto pointer-events-auto opacity-0 transition-opacity duration-500 mb-2">
             <div class="bg-black/50 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex flex-col gap-3">
                 
-                <!-- Special "AI" & "Senrin" Notification Badges -->
+                <!-- Special Notification Badges -->
                 <div id="aiSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-pink-500 via-red-500 to-purple-600 border border-pink-300 rounded-xl px-3 py-1 text-center text-xs font-bold text-white shadow-lg shadow-pink-500/40">
                     <i class="fa-solid fa-sparkles mr-1"></i> 特殊花火『愛』準備完了！LV.5で夜空の真ん中に発動！
                 </div>
                 <div id="senrinSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-300 border border-amber-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-black shadow-lg shadow-amber-500/40">
                     <i class="fa-solid fa-burst mr-1"></i> 特殊花火『千輪菊』準備完了！LV.3以上で一斉開放！
+                </div>
+                <div id="kamuroSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-yellow-300 via-amber-500 to-yellow-600 border border-yellow-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-black shadow-lg shadow-yellow-500/40">
+                    <i class="fa-solid fa-crown mr-1"></i> 特殊花火『冠』準備完了！LV.4以上で2本同時打上げ！
+                </div>
+                <div id="mangekyoSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-teal-400 via-indigo-500 to-purple-500 border border-teal-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-white shadow-lg shadow-teal-500/40">
+                    <i class="fa-solid fa-gem mr-1"></i> 特殊花火『万華鏡』準備完了！LV.4以上で幾何学花火展開！
                 </div>
 
                 <!-- Shape Selector -->
@@ -114,7 +132,7 @@
                 </div>
 
                 <div id="instructionText" class="text-[10px] text-center text-gray-400/80">
-                    <i class="fa-solid fa-hand-pointer mr-1"></i>画面を長押しして大きさをチャージ、離して打ち上げ
+                    <i class="fa-solid fa-hand-pointer mr-1"></i>画面を長押しして大きさをチャージ、離して打ち上げ（色変更で特殊インターバルをキャンセル可）
                 </div>
             </div>
         </div>
@@ -153,15 +171,15 @@
             <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-left text-xs md:text-sm text-gray-300 space-y-2 max-w-xs w-full backdrop-blur-md">
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-circle-info text-pink-400 mt-0.5"></i>
-                    <span>タップ＆ホールドで花火の大きさをチャージ！</span>
+                    <span>長押しチャージで発射！色選択で特殊クールダウンを即解除！</span>
                 </div>
                 <div class="flex items-start gap-2">
-                    <i class="fa-solid fa-heart text-pink-400 mt-0.5"></i>
-                    <span>ハート花火を蓄積(合計LV.8以上)し、LV.5で放つと巨大『愛』花火！</span>
+                    <i class="fa-solid fa-sparkles text-pink-400 mt-0.5"></i>
+                    <span>特殊花火発破時には観客から「たまや～」「かぎや～」の歓声！</span>
                 </div>
                 <div class="flex items-start gap-2">
-                    <i class="fa-solid fa-burst text-amber-300 mt-0.5"></i>
-                    <span>「菊」を4色連続打ちしLV.3以上で放つと豪華『千輪菊』爆破！</span>
+                    <i class="fa-solid fa-gem text-teal-300 mt-0.5"></i>
+                    <span>牡丹蓄積(LV.12)後LV.4以上で色鮮やかな『万華鏡』発動！</span>
                 </div>
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
@@ -212,12 +230,102 @@
                     <i class="fa-solid fa-rotate-right"></i>
                     <span>もう一度打ち上げる</span>
                 </button>
+
+                <button id="homeButton" class="px-8 py-2.5 w-full rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-medium text-xs transition-all duration-300 active:scale-95 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-house"></i>
+                    <span>スタート画面に戻る</span>
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Game Logic -->
     <script>
+        // --- AUDIO SYNTHESIZER (Web Audio API) ---
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playWhistle() {
+                if (!this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, this.ctx.currentTime + 0.6);
+                    
+                    gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.0, this.ctx.currentTime + 0.6);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + 0.6);
+                } catch(e){}
+            }
+
+            playExplosion(isSpecial = false) {
+                if (!this.ctx) return;
+                try {
+                    // Low Boom Noise Buffer
+                    const bufferSize = this.ctx.sampleRate * (isSpecial ? 1.5 : 0.8);
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) {
+                        data[i] = Math.random() * 2 - 1;
+                    }
+
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+
+                    const filter = this.ctx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(isSpecial ? 250 : 400, this.ctx.currentTime);
+                    filter.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + (isSpecial ? 1.4 : 0.7));
+
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(isSpecial ? 0.4 : 0.25, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (isSpecial ? 1.4 : 0.7));
+
+                    noise.connect(filter);
+                    filter.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    noise.start();
+
+                    // High sparkle layer for special fireworks
+                    if (isSpecial) {
+                        const sparkOsc = this.ctx.createOscillator();
+                        const sparkGain = this.ctx.createGain();
+                        sparkOsc.type = 'triangle';
+                        sparkOsc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                        sparkOsc.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 1.0);
+                        sparkGain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                        sparkGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.0);
+
+                        sparkOsc.connect(sparkGain);
+                        sparkGain.connect(this.ctx.destination);
+                        sparkOsc.start();
+                        sparkOsc.stop(this.ctx.currentTime + 1.0);
+                    }
+                } catch(e){}
+            }
+        }
+
+        const sounds = new SoundFX();
+
         // --- CONSTANTS & CONFIGURATIONS ---
         const GAME_DURATION = 60.0; // Seconds
         const INACTIVITY_LIMIT = 5.0; // Seconds after ready
@@ -225,11 +333,11 @@
         // Shapes config
         const SHAPES = [
             { id: 'circle', name: '菊 (標準)', icon: 'fa-regular fa-circle' },
+            { id: 'peony', name: '牡丹', icon: 'fa-solid fa-asterisk' },
             { id: 'heart', name: 'ハート', icon: 'fa-regular fa-heart' },
-            { id: 'smile', name: 'ニコちゃん', icon: 'fa-regular fa-face-smile' },
             { id: 'willow', name: 'シダレヤナギ', icon: 'fa-solid fa-water' },
-            { id: 'star', name: '星型', icon: 'fa-regular fa-star' },
-            { id: 'peony', name: '牡丹', icon: 'fa-solid fa-asterisk' }
+            { id: 'smile', name: 'ニコちゃん', icon: 'fa-regular fa-face-smile' },
+            { id: 'star', name: '星型', icon: 'fa-regular fa-star' }
         ];
 
         // Colors config
@@ -254,8 +362,11 @@
         let fireworkCount = 0;
 
         // Special Firework Condition Trackers
-        let heartChargeAccumulator = 0; // Accumulated charge levels for 'heart' fireworks
+        let heartChargeAccumulator = 0; // Accumulated charge levels for 'heart'
+        let willowChargeAccumulator = 0; // Accumulated charge levels for 'willow'
+        let peonyChargeAccumulator = 0; // Accumulated charge levels for 'peony'
         let circleColorSequence = []; // Array of consecutive colors launched with 'circle'
+        let isSpecialCooldown = false; // Flag if current cooldown is from special firework
 
         // Replay Data Recording
         let recordedLaunches = [];
@@ -342,10 +453,12 @@
             const startBtn = document.getElementById('startButton');
             const restartBtn = document.getElementById('restartButton');
             const replayBtn = document.getElementById('replayButton');
+            const homeBtn = document.getElementById('homeButton');
             const exitReplayBtn = document.getElementById('exitReplayButton');
 
-            startBtn.addEventListener('click', startGame);
-            restartBtn.addEventListener('click', startGame);
+            startBtn.addEventListener('click', () => { sounds.init(); startGame(); });
+            restartBtn.addEventListener('click', () => { sounds.init(); startGame(); });
+            homeBtn.addEventListener('click', showStartScreen);
             replayBtn.addEventListener('click', startReplay);
             exitReplayBtn.addEventListener('click', endReplay);
 
@@ -362,7 +475,6 @@
             });
             targetBtn.className = 'shape-btn px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 bg-pink-500/20 border-pink-400 text-pink-200';
             
-            // Reset circle color sequence if shape changed away from circle
             if (currentShape !== 'circle') {
                 circleColorSequence = [];
             }
@@ -375,11 +487,19 @@
                 b.className = 'color-btn px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 bg-white/5 border-white/10 text-gray-400 hover:bg-white/10';
             });
             targetBtn.className = 'color-btn px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 bg-white/20 border-white text-white';
+
+            // Cancel special firework cooldown on color change
+            if (isSpecialCooldown && cooldownTimer > 0) {
+                cooldownTimer = 0;
+                isSpecialCooldown = false;
+            }
         }
 
         function updateSpecialBadges() {
             const aiBadge = document.getElementById('aiSpecialBadge');
             const senrinBadge = document.getElementById('senrinSpecialBadge');
+            const kamuroBadge = document.getElementById('kamuroSpecialBadge');
+            const mangekyoBadge = document.getElementById('mangekyoSpecialBadge');
 
             if (currentShape === 'heart' && heartChargeAccumulator >= 8) {
                 aiBadge.classList.remove('hidden');
@@ -387,13 +507,35 @@
                 aiBadge.classList.add('hidden');
             }
 
-            // Senrin Condition: 'circle' shape and 4+ unique colors launched consecutively
             const uniqueColorsCount = new Set(circleColorSequence).size;
             if (currentShape === 'circle' && uniqueColorsCount >= 4) {
                 senrinBadge.classList.remove('hidden');
             } else {
                 senrinBadge.classList.add('hidden');
             }
+
+            if (currentShape === 'willow' && willowChargeAccumulator >= 10) {
+                kamuroBadge.classList.remove('hidden');
+            } else {
+                kamuroBadge.classList.add('hidden');
+            }
+
+            if (currentShape === 'peony' && peonyChargeAccumulator >= 12) {
+                mangekyoBadge.classList.remove('hidden');
+            } else {
+                mangekyoBadge.classList.add('hidden');
+            }
+        }
+
+        function showStartScreen() {
+            document.getElementById('resultScreen').classList.add('hidden');
+            document.getElementById('replayHeader').classList.add('hidden');
+            document.getElementById('inGameHeader').style.opacity = '0';
+            document.getElementById('inGameControls').style.opacity = '0';
+            document.getElementById('startScreen').classList.remove('hidden');
+            isPlaying = false;
+            isReplaying = false;
+            document.getElementById('speechLayer').innerHTML = '';
         }
 
         // --- GAME CONTROL ---
@@ -401,6 +543,7 @@
             document.getElementById('startScreen').classList.add('hidden');
             document.getElementById('resultScreen').classList.add('hidden');
             document.getElementById('replayHeader').classList.add('hidden');
+            document.getElementById('speechLayer').innerHTML = '';
 
             document.getElementById('inGameHeader').style.opacity = '1';
             document.getElementById('inGameControls').style.opacity = '1';
@@ -413,8 +556,11 @@
             emoMultiplier = 1.0;
             fireworkCount = 0;
             heartChargeAccumulator = 0;
+            willowChargeAccumulator = 0;
+            peonyChargeAccumulator = 0;
             circleColorSequence = [];
             cooldownTimer = 0;
+            isSpecialCooldown = false;
             inactivityTimer = 0;
             isCharging = false;
 
@@ -453,8 +599,9 @@
             if (recordedLaunches.length === 0) return;
 
             document.getElementById('resultScreen').classList.add('hidden');
-            document.getElementById('inGameControls').style.opacity = '0'; // Hide control bar during replay
+            document.getElementById('inGameControls').style.opacity = '0';
             document.getElementById('replayHeader').classList.remove('hidden');
+            document.getElementById('speechLayer').innerHTML = '';
 
             isReplaying = true;
             isPlaying = false;
@@ -470,6 +617,7 @@
             isReplaying = false;
             document.getElementById('replayHeader').classList.add('hidden');
             document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('speechLayer').innerHTML = '';
         }
 
         function updateReplay(dt) {
@@ -485,7 +633,12 @@
                     const launchX = launch.relX * width;
                     const launchY = launch.relY * height;
 
-                    fireworks.push(new Firework(launchX, launchY, launch.level, launch.shape, launch.colorId, launch.isSpecial));
+                    if (launch.shape === 'kamuro') {
+                        fireworks.push(new Firework(width * 0.25, height * 0.35, launch.level, 'kamuro', launch.colorId, true));
+                        fireworks.push(new Firework(width * 0.75, height * 0.35, launch.level, 'kamuro', launch.colorId, true));
+                    } else {
+                        fireworks.push(new Firework(launchX, launchY, launch.level, launch.shape, launch.colorId, launch.isSpecial, launch.isSaturn));
+                    }
                 }
             });
 
@@ -494,9 +647,36 @@
             }
         }
 
+        // --- CROWD CHEER SPEECH BUBBLES ---
+        function spawnCrowdCheer(posX, posY, text) {
+            const container = document.getElementById('speechLayer');
+            const el = document.createElement('div');
+            
+            // Positioning: During replay, always spawn from bottom audience water level
+            let finalX = posX;
+            let finalY = posY;
+            if (isReplaying) {
+                finalX = width * (0.2 + Math.random() * 0.6);
+                finalY = height * 0.88;
+            }
+
+            el.className = 'speech-bubble absolute -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-2xl bg-white/90 border-2 border-pink-400 text-pink-600 font-extrabold text-lg md:text-2xl shadow-lg shadow-pink-500/30 whitespace-nowrap z-20 pointer-events-none';
+            el.style.left = `${finalX}px`;
+            el.style.top = `${finalY}px`;
+            el.innerText = text;
+
+            container.appendChild(el);
+
+            setTimeout(() => {
+                if (el.parentNode) el.parentNode.removeChild(el);
+            }, 2200);
+        }
+
         // --- INPUT HANDLERS ---
         function handlePointerDown(e) {
             if (!isPlaying || isReplaying || cooldownTimer > 0) return;
+
+            sounds.init();
 
             const rect = canvas.getBoundingClientRect();
             touchPos = {
@@ -534,6 +714,7 @@
         function launchFirework(targetX, targetY, level) {
             let shapeToLaunch = currentShape;
             let isSpecial = false;
+            let isSaturn = false;
 
             // --- Check Special Condition 1: "AI" Kanji Firework ---
             if (currentShape === 'heart') {
@@ -549,7 +730,6 @@
             } 
             // --- Check Special Condition 2: "Senrin" (千輪菊) Firework ---
             else if (currentShape === 'circle') {
-                // Record launched color if unique from last or adding to sequence
                 if (circleColorSequence.length === 0 || circleColorSequence[circleColorSequence.length - 1] !== currentColor) {
                     circleColorSequence.push(currentColor);
                 }
@@ -558,11 +738,37 @@
                 if (uniqueColorsCount >= 4 && level >= 3) {
                     shapeToLaunch = 'senrin';
                     isSpecial = true;
-                    circleColorSequence = []; // Reset after trigger
+                    circleColorSequence = [];
+                }
+            } 
+            // --- Check Special Condition 3: "Kamuro" (冠) Firework ---
+            else if (currentShape === 'willow') {
+                if (willowChargeAccumulator >= 10 && level >= 4) {
+                    shapeToLaunch = 'kamuro';
+                    isSpecial = true;
+                    willowChargeAccumulator = 0;
+                } else {
+                    willowChargeAccumulator += level;
+                }
+            }
+            // --- Check Special Condition 4: "Mangekyo" (万華鏡) Firework ---
+            else if (currentShape === 'peony') {
+                if (peonyChargeAccumulator >= 12 && level >= 4) {
+                    shapeToLaunch = 'mangekyo';
+                    isSpecial = true;
+                    peonyChargeAccumulator = 0;
+                } else {
+                    peonyChargeAccumulator += level;
                 }
             } else {
-                // Reset sequences on other shapes
                 circleColorSequence = [];
+            }
+
+            // Check non-special Star transformation into Saturn (1 in 10 chance)
+            if (shapeToLaunch === 'star' && !isSpecial) {
+                if (Math.random() < 0.1) {
+                    isSaturn = true;
+                }
             }
 
             updateSpecialBadges();
@@ -575,22 +781,40 @@
                 shape: shapeToLaunch,
                 colorId: currentColor,
                 isSpecial: isSpecial,
+                isSaturn: isSaturn,
                 played: false
             });
 
-            fireworks.push(new Firework(targetX, targetY, level, shapeToLaunch, currentColor, isSpecial));
-            fireworkCount++;
+            // Play Launch Whistle Audio
+            sounds.playWhistle();
+
+            if (shapeToLaunch === 'kamuro') {
+                fireworks.push(new Firework(width * 0.25, height * 0.35, level, 'kamuro', currentColor, true));
+                fireworks.push(new Firework(width * 0.75, height * 0.35, level, 'kamuro', currentColor, true));
+                fireworkCount += 2;
+            } else {
+                fireworks.push(new Firework(targetX, targetY, level, shapeToLaunch, currentColor, isSpecial, isSaturn));
+                fireworkCount++;
+            }
             
             inactivityTimer = 0;
 
-            const baseCooldown = isSpecial ? 3.2 : level * 0.6;
+            // Cooldown logic: Special fireworks have fixed 3.0s interval
+            let baseCooldown = level * 0.6;
+            if (isSpecial) {
+                baseCooldown = 3.0; // 3秒に変更
+                isSpecialCooldown = true;
+            } else {
+                isSpecialCooldown = false;
+            }
+
             const emoReduction = Math.min(0.5, (score / 20000));
             cooldownTimer = baseCooldown * (1 - emoReduction);
         }
 
         // --- CLASSES ---
         class Firework {
-            constructor(targetX, targetY, level, shape, colorId, isSpecial = false) {
+            constructor(targetX, targetY, level, shape, colorId, isSpecial = false, isSaturn = false) {
                 this.startX = targetX + (Math.random() - 0.5) * (isSpecial ? 0 : 30);
                 this.startY = height + 10;
                 this.x = this.startX;
@@ -601,6 +825,7 @@
                 this.shape = shape;
                 this.colorConfig = COLORS.find(c => c.id === colorId) || COLORS[0];
                 this.isSpecial = isSpecial;
+                this.isSaturn = isSaturn;
 
                 const distance = Math.hypot(targetX - this.x, targetY - this.y);
                 this.speed = Math.min(22, distance / 26);
@@ -647,8 +872,18 @@
             explode() {
                 this.exploded = true;
 
+                // Play explosion sound effect
+                sounds.playExplosion(this.isSpecial);
+
+                if (this.isSpecial) {
+                    // Trigger Crowd Shout Speech Bubbles ("たまや～" / "かぎや～")
+                    const cheers = ['＼ たまや～！ ／', '＼ かぎや～！ ／', '＼ 日本一～！ ／'];
+                    const chosenText = cheers[Math.floor(Math.random() * cheers.length)];
+                    spawnCrowdCheer(this.x, this.y, chosenText);
+                }
+
                 if (isPlaying) {
-                    const basePoints = this.isSpecial ? 2600 : this.level * 110;
+                    const basePoints = this.isSpecial ? 3000 : (this.isSaturn ? 500 : this.level * 110);
                     const emoBonus = Math.floor(basePoints * emoMultiplier);
                     score += emoBonus;
                     
@@ -656,7 +891,7 @@
                     updateScoreDisplay();
                 }
 
-                createExplosionParticles(this.x, this.y, this.level, this.shape, this.colorConfig);
+                createExplosionParticles(this.x, this.y, this.level, this.shape, this.colorConfig, this.isSaturn);
             }
         }
 
@@ -706,14 +941,60 @@
         }
 
         // --- EXPLOSION SHAPES GENERATOR ---
-        function createExplosionParticles(x, y, level, shape, colorConfig) {
+        function createExplosionParticles(x, y, level, shape, colorConfig, isSaturn = false) {
             const particleCount = 40 + level * 35;
             const baseSpeed = 2 + level * 1.8;
             const colors = colorConfig.colors;
 
-            if (shape === 'senrin') {
+            if (shape === 'mangekyo') {
+                // --- SPECIAL "万華鏡" (MANGEKYO) FIREWORK ---
+                const mirrors = 8; // Geometric symmetry branches
+                const dotsPerBranch = 16 + level * 4;
+                const mColors = ['#8be9fd', '#ff79c6', '#bd93f9', '#50fa7b', '#f1fa8c', '#ffb86c'];
+
+                for (let b = 0; b < mirrors; b++) {
+                    const branchAngle = (b / mirrors) * Math.PI * 2;
+
+                    for (let i = 0; i < dotsPerBranch; i++) {
+                        const distSpeed = (0.2 + (i / dotsPerBranch) * 1.2) * baseSpeed * 1.5;
+                        const subAngle = branchAngle + (i % 2 === 0 ? 0.1 : -0.1);
+                        const vx = Math.cos(subAngle) * distSpeed;
+                        const vy = Math.sin(subAngle) * distSpeed;
+                        const color = mColors[i % mColors.length];
+
+                        particles.push(new Particle(x, y, vx, vy, color, 2.5, 0.007, true, 0.015, 0.985));
+                    }
+                }
+
+                // Core shining star cluster
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 2 + 0.5;
+                    particles.push(new Particle(x, y, Math.cos(angle)*speed, Math.sin(angle)*speed, '#ffffff', 3.5, 0.015, true));
+                }
+
+            } else if (shape === 'kamuro') {
+                // --- SPECIAL "冠" (KAMURO) FIREWORK ---
+                const kamuroCount = particleCount * 2.2;
+                const goldColors = ['#f1fa8c', '#ffb86c', '#ffffff', '#ffd700'];
+
+                for (let i = 0; i < kamuroCount; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = (0.3 + Math.random() * 1.2) * baseSpeed * 1.4;
+                    const vx = Math.cos(angle) * speed;
+                    const vy = Math.sin(angle) * speed - 1.0;
+                    const color = goldColors[i % goldColors.length];
+
+                    const decay = 0.0025 + Math.random() * 0.002;
+                    const gravity = 0.05 + Math.random() * 0.02;
+                    const friction = 0.97;
+
+                    particles.push(new Particle(x, y, vx, vy, color, 2.2 + level * 0.3, decay, true, gravity, friction));
+                }
+
+            } else if (shape === 'senrin') {
                 // --- SPECIAL "千輪菊" (SENRIN) FIREWORK ---
-                const subBloomCount = 10 + level * 3; // 10 to 25 sub-bursts
+                const subBloomCount = 10 + level * 3;
                 const spreadRadius = (70 + level * 25);
 
                 for (let b = 0; b < subBloomCount; b++) {
@@ -721,8 +1002,6 @@
                     const dist = Math.random() * spreadRadius;
                     const subX = x + Math.cos(angle) * dist;
                     const subY = y + Math.sin(angle) * dist;
-                    
-                    // Pick color palette for each sub-chrysanthemum
                     const bloomColor = COLORS[b % COLORS.length].colors[0];
 
                     const subDots = 18;
@@ -732,20 +1011,10 @@
                         const vx = Math.cos(subAngle) * speed;
                         const vy = Math.sin(subAngle) * speed;
 
-                        particles.push(new Particle(
-                            subX, subY,
-                            vx, vy,
-                            bloomColor,
-                            2.2,
-                            0.010, // Medium decay
-                            true,
-                            0.02,
-                            0.97
-                        ));
+                        particles.push(new Particle(subX, subY, vx, vy, bloomColor, 2.2, 0.010, true, 0.02, 0.97));
                     }
                 }
 
-                // Core flash bloom
                 for (let i = 0; i < 40; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const speed = Math.random() * 3 + 1;
@@ -786,17 +1055,7 @@
                             const vy = py * 1.5 + (Math.random() - 0.5) * 0.4;
                             const color = aiColors[Math.floor(Math.random() * aiColors.length)];
 
-                            particles.push(new Particle(
-                                x + px * scale,
-                                y + py * scale,
-                                vx, vy,
-                                color,
-                                3.2,
-                                0.005,
-                                true,
-                                0.015,
-                                0.98
-                            ));
+                            particles.push(new Particle(x + px * scale, y + py * scale, vx, vy, color, 3.2, 0.005, true, 0.015, 0.98));
                         }
                     }
                 });
@@ -804,17 +1063,46 @@
                 for (let i = 0; i < 90; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const speed = (Math.random() * 0.8 + 1.2) * baseSpeed * 1.6;
-                    particles.push(new Particle(
-                        x, y,
-                        Math.cos(angle) * speed,
-                        Math.sin(angle) * speed,
-                        '#ffb86c',
-                        2.0,
-                        0.008,
-                        true,
-                        0.02,
-                        0.97
-                    ));
+                    particles.push(new Particle(x, y, Math.cos(angle) * speed, Math.sin(angle) * speed, '#ffb86c', 2.0, 0.008, true, 0.02, 0.97));
+                }
+
+            } else if (shape === 'star') {
+                if (isSaturn) {
+                    // --- SATURN (土星) FIREWORK VARIATION ---
+                    const planetColor = colors[0];
+                    const ringColor = '#f1fa8c';
+
+                    const sphereDots = 25;
+                    for (let i = 0; i < sphereDots; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * baseSpeed * 0.7;
+                        particles.push(new Particle(x, y, Math.cos(angle)*speed, Math.sin(angle)*speed, planetColor, 2.5, 0.012, true));
+                    }
+
+                    const ringDots = 45;
+                    const tilt = -0.35;
+                    for (let i = 0; i < ringDots; i++) {
+                        const angle = (i / ringDots) * Math.PI * 2;
+                        const rx = Math.cos(angle) * baseSpeed * 1.8;
+                        const ry = Math.sin(angle) * baseSpeed * 0.5;
+
+                        const vx = rx * Math.cos(tilt) - ry * Math.sin(tilt);
+                        const vy = rx * Math.sin(tilt) + ry * Math.cos(tilt);
+
+                        particles.push(new Particle(x, y, vx, vy, ringColor, 2.2, 0.010, true));
+                    }
+                } else {
+                    for (let i = 0; i < particleCount; i++) {
+                        const points = 5;
+                        const starAngle = (i / particleCount) * Math.PI * 2;
+                        const r = Math.sin(points * starAngle / 2);
+                        const speedMod = 0.4 + Math.abs(r) * 0.8;
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+
+                        const vx = Math.cos(starAngle) * baseSpeed * speedMod;
+                        const vy = Math.sin(starAngle) * baseSpeed * speedMod;
+                        particles.push(new Particle(x, y, vx, vy, color, 2 + level * 0.3, 0.01, Math.random() < 0.4));
+                    }
                 }
 
             } else if (shape === 'smile') {
@@ -833,9 +1121,6 @@
                 const eyeOffset = radius * 0.35;
                 for (let i = 0; i < 4; i++) {
                     particles.push(new Particle(x, y, -eyeOffset + (Math.random()-0.5)*2, -eyeOffset + (Math.random()-0.5)*2, eyeColor, 2.5, 0.012, true));
-                }
-
-                for (let i = 0; i < 4; i++) {
                     particles.push(new Particle(x, y, eyeOffset + (Math.random()-0.5)*2, -eyeOffset + (Math.random()-0.5)*2, eyeColor, 2.5, 0.012, true));
                 }
 
@@ -868,13 +1153,7 @@
                     let angle, speedMod = 1.0;
                     const color = colors[Math.floor(Math.random() * colors.length)];
 
-                    if (shape === 'star') {
-                        const points = 5;
-                        const starAngle = (i / particleCount) * Math.PI * 2;
-                        angle = starAngle;
-                        const r = Math.sin(points * starAngle / 2);
-                        speedMod = 0.4 + Math.abs(r) * 0.8;
-                    } else if (shape === 'heart') {
+                    if (shape === 'heart') {
                         const t = (i / particleCount) * Math.PI * 2;
                         const hx = 16 * Math.pow(Math.sin(t), 3);
                         const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
@@ -927,7 +1206,10 @@
 
             if (cooldownTimer > 0) {
                 cooldownTimer -= dt;
-                if (cooldownTimer < 0) cooldownTimer = 0;
+                if (cooldownTimer < 0) {
+                    cooldownTimer = 0;
+                    isSpecialCooldown = false;
+                }
             } else {
                 inactivityTimer += dt;
                 
@@ -1034,6 +1316,8 @@
             const radius = 20 + level * 8;
             const isAiReady = (currentShape === 'heart' && heartChargeAccumulator >= 8 && level === 5);
             const isSenrinReady = (currentShape === 'circle' && new Set(circleColorSequence).size >= 4 && level >= 3);
+            const isKamuroReady = (currentShape === 'willow' && willowChargeAccumulator >= 10 && level >= 4);
+            const isMangekyoReady = (currentShape === 'peony' && peonyChargeAccumulator >= 12 && level >= 4);
 
             let labelText = `LV.${level}`;
             let strokeStyle = `rgba(255, 120, 180, ${0.4 + level * 0.12})`;
@@ -1044,17 +1328,23 @@
             } else if (isSenrinReady) {
                 labelText = '「千輪菊」発動！';
                 strokeStyle = 'rgba(255, 180, 50, 0.9)';
+            } else if (isKamuroReady) {
+                labelText = '「冠」発動！';
+                strokeStyle = 'rgba(255, 215, 0, 0.9)';
+            } else if (isMangekyoReady) {
+                labelText = '「万華鏡」発動！';
+                strokeStyle = 'rgba(80, 250, 220, 0.9)';
             }
 
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.strokeStyle = strokeStyle;
-            ctx.lineWidth = (isAiReady || isSenrinReady) ? 5 : 3;
+            ctx.lineWidth = (isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady) ? 5 : 3;
             ctx.stroke();
 
             ctx.beginPath();
             ctx.arc(x, y, 6 + level * 2, 0, Math.PI * 2);
-            ctx.fillStyle = (isAiReady || isSenrinReady) ? '#ffb86c' : 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = (isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady) ? '#ffb86c' : 'rgba(255, 255, 255, 0.9)';
             ctx.shadowColor = '#ff79c6';
             ctx.shadowBlur = 15;
             ctx.fill();
