@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>エモ花火ナイト - Emo Fireworks Game</title>
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Yuji+Syuku&family=Zen+Kaku+Gothic+New:wght@300;500;700&display=swap" rel="stylesheet">
@@ -40,7 +37,6 @@
         .glow-box {
             box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
-        /* Custom Speech Bubble Animation */
         @keyframes bubbleFloat {
             0% { transform: scale(0.3) translateY(20px); opacity: 0; }
             20% { transform: scale(1.1) translateY(-10px); opacity: 1; }
@@ -54,33 +50,25 @@
 </head>
 <body class="h-screen w-screen relative overflow-hidden flex flex-col justify-between">
 
-    <!-- Game Canvas -->
     <canvas id="gameCanvas" class="absolute inset-0 w-full h-full z-0 cursor-pointer"></canvas>
 
-    <!-- Speech Bubbles Layer -->
     <div id="speechLayer" class="absolute inset-0 z-10 pointer-events-none overflow-hidden"></div>
 
-    <!-- UI Overlay Area -->
     <div id="uiContainer" class="relative z-10 w-full h-full pointer-events-none flex flex-col justify-between p-4 md:p-6">
         
-        <!-- Header Controls & Status (In-Game) -->
         <div id="inGameHeader" class="flex justify-between items-start w-full opacity-0 transition-opacity duration-500">
-            <!-- Score / Emo Level -->
             <div class="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl p-3 md:p-4 min-w-[140px] md:min-w-[180px]">
                 <div class="text-xs text-pink-300 font-bold tracking-widest uppercase">エモ度 (Emo Level)</div>
                 <div class="flex items-baseline gap-1">
                     <span id="scoreText" class="text-2xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300">0</span>
                     <span class="text-xs text-pink-200">pts</span>
                 </div>
-                <!-- Emo Multiplier / Combo -->
                 <div class="w-full bg-white/10 rounded-full h-1.5 mt-2 overflow-hidden">
                     <div id="emoBar" class="bg-gradient-to-r from-pink-500 to-purple-500 h-full w-0 transition-all duration-300"></div>
                 </div>
             </div>
 
-            <!-- Timers & Warning -->
             <div class="flex flex-col items-end gap-2">
-                <!-- Main Timer -->
                 <div class="bg-black/40 backdrop-blur-md border border-white/10 rounded-2xl px-4 py-2 flex items-center gap-3">
                     <i class="fa-regular font-bold fa-clock text-amber-300 text-lg"></i>
                     <div>
@@ -89,7 +77,6 @@
                     </div>
                 </div>
 
-                <!-- Launch Cooldown & Inactivity Warning -->
                 <div id="statusBadge" class="bg-black/60 backdrop-blur-md border border-pink-500/30 rounded-xl px-3 py-1.5 text-xs flex items-center gap-2 transition-all">
                     <div id="statusDot" class="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></div>
                     <span id="statusText" class="text-gray-200 font-medium">発射可能</span>
@@ -97,19 +84,17 @@
             </div>
         </div>
 
-        <!-- Selection Controls (In-Game Bottom) -->
         <div id="inGameControls" class="w-full max-w-2xl mx-auto pointer-events-auto opacity-0 transition-opacity duration-500 mb-2">
             <div class="bg-black/50 backdrop-blur-md border border-white/15 rounded-2xl p-3 flex flex-col gap-3">
                 
-                <!-- Special Notification Badges -->
                 <div id="starmineSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-red-500 via-amber-400 to-pink-500 border border-yellow-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-white shadow-lg shadow-red-500/50">
                     <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> 特殊花火『特大スターマイン』準備完了！菊LV.5で3連続大連発！
                 </div>
                 <div id="aiSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-pink-500 via-red-500 to-purple-600 border border-pink-300 rounded-xl px-3 py-1 text-center text-xs font-bold text-white shadow-lg shadow-pink-500/40">
-                    <i class="fa-solid fa-sparkles mr-1"></i> 特殊花火『愛』準備完了！LV.5で夜空の真ん中に発動！
+                    <i class="fa-solid fa-sparkles mr-1"></i> 特殊花火『愛』準備完了！LV.4以上で夜空の真ん中に発動！
                 </div>
                 <div id="senrinSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-amber-400 via-orange-500 to-yellow-300 border border-amber-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-black shadow-lg shadow-amber-500/40">
-                    <i class="fa-solid fa-burst mr-1"></i> 特殊花火『千輪菊』準備完了！LV.3以上で一斉開放！
+                    <i class="fa-solid fa-burst mr-1"></i> 特殊花火『千輪菊』準備完了！LV.3以上で一斉開放！（発動ごとにサイズ拡張＆色追加）
                 </div>
                 <div id="kamuroSpecialBadge" class="hidden animate-bounce bg-gradient-to-r from-yellow-300 via-amber-500 to-yellow-600 border border-yellow-200 rounded-xl px-3 py-1 text-center text-xs font-bold text-black shadow-lg shadow-yellow-500/40">
                     <i class="fa-solid fa-crown mr-1"></i> 特殊花火『冠』準備完了！LV.4以上で2本同時打上げ！
@@ -118,20 +103,16 @@
                     <i class="fa-solid fa-gem mr-1"></i> 特殊花火『万華鏡』準備完了！LV.4以上で幾何学花火展開！
                 </div>
 
-                <!-- Shape Selector -->
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-xs text-gray-300 font-medium whitespace-nowrap pl-1"><i class="fa-solid fa-shapes mr-1"></i>形状</span>
                     <div id="shapeGroup" class="flex gap-1.5 overflow-x-auto py-1">
-                        <!-- Buttons populated dynamically -->
-                    </div>
+                        </div>
                 </div>
 
-                <!-- Color Selector -->
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-xs text-gray-300 font-medium whitespace-nowrap pl-1"><i class="fa-solid fa-palette mr-1"></i>色彩</span>
                     <div id="colorGroup" class="flex gap-1.5 overflow-x-auto py-1">
-                        <!-- Buttons populated dynamically -->
-                    </div>
+                        </div>
                 </div>
 
                 <div id="instructionText" class="text-[10px] text-center text-gray-400/80">
@@ -140,7 +121,6 @@
             </div>
         </div>
 
-        <!-- Replay Status Bar Overlay (At Bottom Position During Replay Mode) -->
         <div id="replayHeader" class="hidden w-full max-w-xl mx-auto bg-black/70 backdrop-blur-md border border-cyan-500/40 rounded-2xl p-3 px-5 pointer-events-auto flex justify-between items-center mb-2 shadow-xl shadow-cyan-950/50">
             <div class="flex items-center gap-3">
                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-xs font-bold animate-pulse">
@@ -160,7 +140,6 @@
         </div>
     </div>
 
-    <!-- Start Screen Overlay -->
     <div id="startScreen" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-b from-black/80 via-indigo-950/70 to-black/90 backdrop-blur-sm p-6 text-center">
         <div class="max-w-md w-full flex flex-col items-center gap-5">
             <div class="space-y-2">
@@ -181,8 +160,12 @@
                     <span>特殊花火の開放条件はレシピ「花火師たちの作品たち」をチェック！</span>
                 </div>
                 <div class="flex items-start gap-2">
-                    <i class="fa-solid fa-shuffle text-cyan-300 mt-0.5"></i>
-                    <span>「菊」は20%で楕円、「ニコちゃん」は20%で蝶々にランダム変化！</span>
+                    <i class="fa-solid fa-heart text-pink-400 mt-0.5"></i>
+                    <span>「ハート」はLV.4で二重、LV.5で三重の多重ハートに変化！</span>
+                </div>
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid fa-face-smile text-yellow-300 mt-0.5"></i>
+                    <span>「ニコちゃん」LV.4・LV.5発射で菊・牡丹・ヤナギ・ハートの累計チャージが密かに加算！</span>
                 </div>
                 <div class="flex items-start gap-2">
                     <i class="fa-solid fa-triangle-exclamation text-red-400 mt-0.5"></i>
@@ -205,7 +188,6 @@
         </div>
     </div>
 
-    <!-- Recipe Modal Overlay -->
     <div id="recipeModal" class="hidden absolute inset-0 z-40 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 md:p-6">
         <div class="max-w-lg w-full bg-gradient-to-b from-indigo-950/90 to-black/95 border border-amber-400/30 rounded-3xl p-5 md:p-6 text-left flex flex-col gap-4 max-h-[85vh] shadow-2xl relative">
             <div class="flex justify-between items-center border-b border-white/10 pb-3">
@@ -218,51 +200,45 @@
                 </button>
             </div>
 
-            <!-- Recipe List -->
             <div class="overflow-y-auto space-y-3.5 pr-1 text-xs md:text-sm text-gray-200">
-                <!-- Recipe 1 -->
                 <div class="bg-white/5 border border-pink-500/30 rounded-2xl p-3.5 space-y-1">
                     <div class="flex items-center justify-between text-pink-300 font-bold">
                         <span><i class="fa-solid fa-sparkles mr-1.5"></i>特殊花火『愛』</span>
                         <span class="text-[10px] px-2 py-0.5 rounded bg-pink-500/20 border border-pink-400/30">夜空中央</span>
                     </div>
-                    <p class="text-gray-300">「ハート」の花火のチャージLV累計が<strong class="text-amber-300">8以上</strong>に到達後、<strong class="text-amber-300">LV.5</strong>で打ち上げる。</p>
+                    <p class="text-gray-300">「ハート」の花火のチャージLV累計が<strong class="text-amber-300">6以上</strong>に到達後、<strong class="text-amber-300">LV.4以上</strong>で打ち上げる。（※ニコちゃんLV.4/LV.5で隠し加算可）</p>
                 </div>
 
-                <!-- Recipe 2 -->
                 <div class="bg-white/5 border border-amber-500/30 rounded-2xl p-3.5 space-y-1">
                     <div class="flex items-center justify-between text-amber-300 font-bold">
                         <span><i class="fa-solid fa-burst mr-1.5"></i>特殊花火『千輪菊』</span>
-                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/30">一斉爆発</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400/30">一斉爆発（成長型）</span>
                     </div>
-                    <p class="text-gray-300">「菊」の花火を<strong class="text-amber-300">色違いで連続4回以上</strong>打ち上げた状態で、<strong class="text-amber-300">LV.3以上</strong>で打ち上げる。</p>
+                    <p class="text-gray-300">「菊」の花火を<strong class="text-amber-300">色違いで連続4回以上</strong>打ち上げた状態で、<strong class="text-amber-300">LV.3以上</strong>で打ち上げる。打ち上げるたびにサイズが拡大し、色が追加される（最大3色）。</p>
                 </div>
 
-                <!-- Recipe 3 -->
                 <div class="bg-white/5 border border-yellow-500/30 rounded-2xl p-3.5 space-y-1">
                     <div class="flex items-center justify-between text-yellow-300 font-bold">
                         <span><i class="fa-solid fa-crown mr-1.5"></i>特殊花火『冠（かむろ）』</span>
                         <span class="text-[10px] px-2 py-0.5 rounded bg-yellow-500/20 border border-yellow-400/30">左右2本同時</span>
                     </div>
-                    <p class="text-gray-300">「シダレヤナギ」の花火のチャージLV累計が<strong class="text-amber-300">10以上</strong>に到達後、<strong class="text-amber-300">LV.4以上</strong>で打ち上げる。</p>
+                    <p class="text-gray-300">「シダレヤナギ」の花火のチャージLV累計が<strong class="text-amber-300">8以上</strong>に到達後、<strong class="text-amber-300">LV.4以上</strong>で打ち上げる。（※ニコちゃんLV.4/LV.5で隠し加算可）</p>
                 </div>
 
-                <!-- Recipe 4 -->
                 <div class="bg-white/5 border border-teal-500/30 rounded-2xl p-3.5 space-y-1">
                     <div class="flex items-center justify-between text-teal-300 font-bold">
                         <span><i class="fa-solid fa-gem mr-1.5"></i>特殊花火『万華鏡』</span>
                         <span class="text-[10px] px-2 py-0.5 rounded bg-teal-500/20 border border-teal-400/30">幾何学展開</span>
                     </div>
-                    <p class="text-gray-300">「牡丹」の花火のチャージLV累計が<strong class="text-amber-300">12以上</strong>に到達後、<strong class="text-amber-300">LV.4以上</strong>で打ち上げる。</p>
+                    <p class="text-gray-300">「牡丹」の花火のチャージLV累計が<strong class="text-amber-300">8以上</strong>に到達後、<strong class="text-amber-300">LV.4以上</strong>で打ち上げる。（※ニコちゃんLV.4/LV.5で隠し加算可）</p>
                 </div>
 
-                <!-- Recipe 5 -->
                 <div class="bg-white/5 border border-red-500/30 rounded-2xl p-3.5 space-y-1">
                     <div class="flex items-center justify-between text-red-300 font-bold">
                         <span><i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>特殊花火『特大スターマイン』</span>
                         <span class="text-[10px] px-2 py-0.5 rounded bg-red-500/20 border border-red-400/30">3連発最高峰</span>
                     </div>
-                    <p class="text-gray-300">他の特殊花火を<strong class="text-amber-300">累計2回発動</strong>させた後、「菊」を<strong class="text-amber-300">LV.5</strong>で打ち上げる。（※千輪菊と重複時は特大スターマインが優先発動）</p>
+                    <p class="text-gray-300">他の特殊花火を<strong class="text-amber-300">累計2回発動</strong>させた後、「菊」を<strong class="text-amber-300">LV.5</strong>で打ち上げる。</p>
                 </div>
             </div>
 
@@ -272,7 +248,6 @@
         </div>
     </div>
 
-    <!-- Game Over / Result Overlay -->
     <div id="resultScreen" class="hidden absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-6 text-center">
         <div class="max-w-md w-full flex flex-col items-center gap-6 animate-fade-in">
             <div class="space-y-1">
@@ -280,7 +255,6 @@
                 <h2 class="text-3xl md:text-5xl font-serif-jp font-bold text-white glow-text">花火大会の終わり</h2>
             </div>
 
-            <!-- Score Display Box -->
             <div class="bg-gradient-to-b from-white/10 to-white/5 border border-white/15 rounded-3xl p-6 w-full max-w-xs backdrop-blur-md flex flex-col items-center gap-3 glow-box">
                 <span class="text-xs text-gray-400">獲得したトータルエモ度</span>
                 <div class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-200 to-indigo-200 font-mono" id="finalScoreText">0</div>
@@ -316,7 +290,6 @@
         </div>
     </div>
 
-    <!-- Game Logic -->
     <script>
         // --- AUDIO SYNTHESIZER (Web Audio API) ---
         class SoundFX {
@@ -353,9 +326,16 @@
                 } catch(e){}
             }
 
-            playExplosion(isSpecial = false) {
+            playExplosion(isSpecial = false, level = 1) {
                 if (!this.ctx) return;
                 try {
+                    let volMultiplier = 1.0;
+                    if (isSpecial) {
+                        volMultiplier = 1.5;
+                    } else if (level >= 3) {
+                        volMultiplier = 1.2;
+                    }
+
                     const bufferSize = this.ctx.sampleRate * (isSpecial ? 1.5 : 0.8);
                     const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
                     const data = buffer.getChannelData(0);
@@ -372,7 +352,8 @@
                     filter.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + (isSpecial ? 1.4 : 0.7));
 
                     const gain = this.ctx.createGain();
-                    gain.gain.setValueAtTime(isSpecial ? 0.4 : 0.25, this.ctx.currentTime);
+                    const baseGain = (isSpecial ? 0.4 : 0.25) * volMultiplier;
+                    gain.gain.setValueAtTime(baseGain, this.ctx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + (isSpecial ? 1.4 : 0.7));
 
                     noise.connect(filter);
@@ -387,13 +368,48 @@
                         sparkOsc.type = 'triangle';
                         sparkOsc.frequency.setValueAtTime(800, this.ctx.currentTime);
                         sparkOsc.frequency.linearRampToValueAtTime(200, this.ctx.currentTime + 1.0);
-                        sparkGain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                        sparkGain.gain.setValueAtTime(0.05 * volMultiplier, this.ctx.currentTime);
                         sparkGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.0);
 
                         sparkOsc.connect(sparkGain);
                         sparkGain.connect(this.ctx.destination);
                         sparkOsc.start();
                         sparkOsc.stop(this.ctx.currentTime + 1.0);
+                    }
+
+                    if (isSpecial || level >= 3) {
+                        const crackleCount = isSpecial ? 28 : 12;
+                        const delayOffset = 0.5;
+                        const startTime = this.ctx.currentTime + delayOffset + (isSpecial ? 0.3 : 0.25);
+                        const timeSpan = isSpecial ? 1.0 : 0.6;
+
+                        for (let i = 0; i < crackleCount; i++) {
+                            const crackleTime = startTime + Math.random() * timeSpan;
+                            const dur = 0.02 + Math.random() * 0.03;
+                            const cBuffer = this.ctx.createBuffer(1, this.ctx.sampleRate * dur, this.ctx.sampleRate);
+                            const cData = cBuffer.getChannelData(0);
+                            for (let j = 0; j < cData.length; j++) {
+                                cData[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / cData.length, 2);
+                            }
+
+                            const cSource = this.ctx.createBufferSource();
+                            cSource.buffer = cBuffer;
+
+                            const cFilter = this.ctx.createBiquadFilter();
+                            cFilter.type = 'highpass';
+                            cFilter.frequency.setValueAtTime(1200 + Math.random() * 800, crackleTime);
+
+                            const cGain = this.ctx.createGain();
+                            const cVol = (0.04 + Math.random() * 0.05) * volMultiplier;
+                            cGain.gain.setValueAtTime(cVol, crackleTime);
+                            cGain.gain.exponentialRampToValueAtTime(0.001, crackleTime + dur);
+
+                            cSource.connect(cFilter);
+                            cFilter.connect(cGain);
+                            cGain.connect(this.ctx.destination);
+
+                            cSource.start(crackleTime);
+                        }
                     }
                 } catch(e){}
             }
@@ -402,10 +418,9 @@
         const sounds = new SoundFX();
 
         // --- CONSTANTS & CONFIGURATIONS ---
-        const GAME_DURATION = 60.0; // Seconds
-        const INACTIVITY_LIMIT = 5.0; // Seconds after ready
+        const GAME_DURATION = 60.0;
+        const INACTIVITY_LIMIT = 5.0;
 
-        // Shapes config
         const SHAPES = [
             { id: 'circle', name: '菊 (標準)', icon: 'fa-regular fa-circle' },
             { id: 'peony', name: '牡丹', icon: 'fa-solid fa-asterisk' },
@@ -415,7 +430,6 @@
             { id: 'star', name: '星型', icon: 'fa-regular fa-star' }
         ];
 
-        // Colors config
         const COLORS = [
             { id: 'sakura', name: '桜姫', main: '#ff79c6', colors: ['#ff79c6', '#ffb86c', '#ff70a6'] },
             { id: 'aurora', name: '極光', main: '#50fa7b', colors: ['#50fa7b', '#8be9fd', '#bd93f9'] },
@@ -424,25 +438,28 @@
             { id: 'gold', name: '金千輪', main: '#f1fa8c', colors: ['#f1fa8c', '#ffb86c', '#ffffff'] }
         ];
 
+        const ALL_PALETTE_COLORS = ['#ff79c6', '#ffb86c', '#ff70a6', '#50fa7b', '#8be9fd', '#bd93f9', '#ff5555', '#f1fa8c', '#ffffff'];
+
         // --- GAME STATE ---
         let canvas, ctx;
         let isPlaying = false;
         let isReplaying = false;
         let gameTime = GAME_DURATION;
-        let elapsedGameTime = 0; // Recorded time since start
-        let replayDuration = 0; // Total duration recorded for replay
+        let elapsedGameTime = 0;
+        let replayDuration = 0;
         let lastTime = 0;
         let score = 0;
         let emoMultiplier = 1.0;
         let fireworkCount = 0;
 
-        // Special Firework Condition Trackers
-        let specialFireworkCount = 0; // Total special fireworks executed count
-        let starmineUnlocked = false; // Flag if Starmine is ready
-        let aiUnlocked = false; // Flag if AI is ready
-        let senrinUnlocked = false; // Flag if Senrin is ready
-        let kamuroUnlocked = false; // Flag if Kamuro is ready
-        let mangekyoUnlocked = false; // Flag if Mangekyo is ready
+        let specialFireworkCount = 0;
+        let starmineUnlocked = false;
+        let aiUnlocked = false;
+        let senrinUnlocked = false;
+        let kamuroUnlocked = false;
+        let mangekyoUnlocked = false;
+
+        let senrinCastCount = 0;
 
         let heartChargeAccumulator = 0;
         let willowChargeAccumulator = 0;
@@ -450,29 +467,23 @@
         let circleColorSequence = [];
         let isSpecialCooldown = false;
 
-        // Replay Data Recording
         let recordedLaunches = [];
 
-        // Selection State
         let currentShape = SHAPES[0].id;
         let currentColor = COLORS[0].id;
 
-        // Charge State
         let isCharging = false;
         let chargeStartTime = 0;
-        let currentChargeLevel = 1; // 1 to 5
+        let currentChargeLevel = 1;
         let touchPos = { x: 0, y: 0 };
 
-        // Cooldown & Inactivity Tracking
         let cooldownTimer = 0;
         let inactivityTimer = 0;
 
-        // Entities arrays
         let fireworks = [];
         let particles = [];
         let stars = [];
 
-        // Dynamic viewport size
         let width = 0;
         let height = 0;
 
@@ -487,7 +498,6 @@
             setupUI();
             setupStars();
             
-            // Animation Loop
             requestAnimationFrame(gameLoop);
         });
 
@@ -532,21 +542,13 @@
                 colorGroup.appendChild(btn);
             });
 
-            const startBtn = document.getElementById('startButton');
-            const restartBtn = document.getElementById('restartButton');
-            const recipeBtn = document.getElementById('recipeButton');
-            const closeRecipeBtn = document.getElementById('closeRecipeButton');
-            const replayBtn = document.getElementById('replayButton');
-            const homeBtn = document.getElementById('homeButton');
-            const exitReplayBtn = document.getElementById('exitReplayButton');
-
-            startBtn.addEventListener('click', () => { sounds.init(); startGame(); });
-            restartBtn.addEventListener('click', () => { sounds.init(); startGame(); });
-            recipeBtn.addEventListener('click', () => { document.getElementById('recipeModal').classList.remove('hidden'); });
-            closeRecipeBtn.addEventListener('click', () => { document.getElementById('recipeModal').classList.add('hidden'); });
-            homeBtn.addEventListener('click', showStartScreen);
-            replayBtn.addEventListener('click', startReplay);
-            exitReplayBtn.addEventListener('click', endReplay);
+            document.getElementById('startButton').addEventListener('click', () => { sounds.init(); startGame(); });
+            document.getElementById('restartButton').addEventListener('click', () => { sounds.init(); startGame(); });
+            document.getElementById('recipeButton').addEventListener('click', () => { document.getElementById('recipeModal').classList.remove('hidden'); });
+            document.getElementById('closeRecipeButton').addEventListener('click', () => { document.getElementById('recipeModal').classList.add('hidden'); });
+            document.getElementById('homeButton').addEventListener('click', showStartScreen);
+            document.getElementById('replayButton').addEventListener('click', startReplay);
+            document.getElementById('exitReplayButton').addEventListener('click', endReplay);
 
             canvas.addEventListener('pointerdown', handlePointerDown);
             window.addEventListener('pointermove', handlePointerMove);
@@ -570,7 +572,6 @@
             });
             targetBtn.className = 'color-btn px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 bg-white/20 border-white text-white';
 
-            // Cancel special firework cooldown on color change
             if (isSpecialCooldown && cooldownTimer > 0) {
                 cooldownTimer = 0;
                 isSpecialCooldown = false;
@@ -584,35 +585,11 @@
             const kamuroBadge = document.getElementById('kamuroSpecialBadge');
             const mangekyoBadge = document.getElementById('mangekyoSpecialBadge');
 
-            if (currentShape === 'circle' && starmineUnlocked) {
-                starmineBadge.classList.remove('hidden');
-            } else {
-                starmineBadge.classList.add('hidden');
-            }
-
-            if (currentShape === 'heart' && aiUnlocked) {
-                aiBadge.classList.remove('hidden');
-            } else {
-                aiBadge.classList.add('hidden');
-            }
-
-            if (currentShape === 'circle' && senrinUnlocked && !starmineUnlocked) {
-                senrinBadge.classList.remove('hidden');
-            } else {
-                senrinBadge.classList.add('hidden');
-            }
-
-            if (currentShape === 'willow' && kamuroUnlocked) {
-                kamuroBadge.classList.remove('hidden');
-            } else {
-                kamuroBadge.classList.add('hidden');
-            }
-
-            if (currentShape === 'peony' && mangekyoUnlocked) {
-                mangekyoBadge.classList.remove('hidden');
-            } else {
-                mangekyoBadge.classList.add('hidden');
-            }
+            starmineBadge.classList.toggle('hidden', !(currentShape === 'circle' && starmineUnlocked));
+            aiBadge.classList.toggle('hidden', !(currentShape === 'heart' && aiUnlocked));
+            senrinBadge.classList.toggle('hidden', !(currentShape === 'circle' && senrinUnlocked && !starmineUnlocked));
+            kamuroBadge.classList.toggle('hidden', !(currentShape === 'willow' && kamuroUnlocked));
+            mangekyoBadge.classList.toggle('hidden', !(currentShape === 'peony' && mangekyoUnlocked));
         }
 
         function showStartScreen() {
@@ -652,6 +629,8 @@
             kamuroUnlocked = false;
             mangekyoUnlocked = false;
 
+            senrinCastCount = 0;
+
             heartChargeAccumulator = 0;
             willowChargeAccumulator = 0;
             peonyChargeAccumulator = 0;
@@ -662,7 +641,6 @@
             isCharging = false;
 
             recordedLaunches = [];
-
             fireworks = [];
             particles = [];
 
@@ -742,7 +720,7 @@
                             if (isReplaying) fireworks.push(new Firework(width * 0.2, height * 0.42, launch.level, 'starmine', launch.colorId, true));
                         }, 560);
                     } else {
-                        fireworks.push(new Firework(launchX, launchY, launch.level, launch.shape, launch.colorId, launch.isSpecial, launch.isSaturn, launch.isButterfly, launch.isOval));
+                        fireworks.push(new Firework(launchX, launchY, launch.level, launch.shape, launch.colorId, launch.isSpecial, launch.isSaturn, launch.isButterfly, launch.isOval, launch.senrinIndex || 0));
                     }
                 }
             });
@@ -752,7 +730,6 @@
             }
         }
 
-        // --- CROWD CHEER SPEECH BUBBLES ---
         function spawnCrowdCheer(posX, posY, text) {
             const container = document.getElementById('speechLayer');
             const el = document.createElement('div');
@@ -828,47 +805,47 @@
             let isSaturn = false;
             let isButterfly = false;
             let isOval = false;
+            let currentSenrinIndex = senrinCastCount;
 
-            // --- 1. Check Currently Unlocked Special Triggers (Priority Order) ---
             if (currentShape === 'circle') {
                 if (starmineUnlocked && level === 5) {
                     shapeToLaunch = 'starmine';
                     isSpecial = true;
-                    starmineUnlocked = false; // Reset after launch
+                    starmineUnlocked = false;
                 } else if (senrinUnlocked && level >= 3) {
                     shapeToLaunch = 'senrin';
                     isSpecial = true;
-                    senrinUnlocked = false; // Reset after launch
+                    senrinUnlocked = false;
                     circleColorSequence = [];
+                    senrinCastCount++;
                     checkSpecialCountIncrement();
                 }
-            } else if (currentShape === 'heart' && aiUnlocked && level === 5) {
+            } else if (currentShape === 'heart' && aiUnlocked && level >= 4) { // 『愛』: LV.4以上で発動
                 shapeToLaunch = 'ai';
                 isSpecial = true;
                 targetX = width * 0.5;
                 targetY = height * 0.38;
-                aiUnlocked = false; // Reset after launch
+                aiUnlocked = false;
                 heartChargeAccumulator = 0;
                 checkSpecialCountIncrement();
-            } else if (currentShape === 'willow' && kamuroUnlocked && level >= 4) {
+            } else if (currentShape === 'willow' && kamuroUnlocked && level >= 4) { // 『冠』: LV.4以上で発動
                 shapeToLaunch = 'kamuro';
                 isSpecial = true;
-                kamuroUnlocked = false; // Reset after launch
+                kamuroUnlocked = false;
                 willowChargeAccumulator = 0;
                 checkSpecialCountIncrement();
-            } else if (currentShape === 'peony' && mangekyoUnlocked && level >= 4) {
+            } else if (currentShape === 'peony' && mangekyoUnlocked && level >= 4) { // 『万華鏡』: LV.4以上で発動
                 shapeToLaunch = 'mangekyo';
                 isSpecial = true;
-                mangekyoUnlocked = false; // Reset after launch
+                mangekyoUnlocked = false;
                 peonyChargeAccumulator = 0;
                 checkSpecialCountIncrement();
             }
 
-            // --- 2. Accumulate Progress for Normal Launch (When NOT triggering a Special) ---
             if (!isSpecial) {
                 if (currentShape === 'heart' && !aiUnlocked) {
                     heartChargeAccumulator += level;
-                    if (heartChargeAccumulator >= 8) aiUnlocked = true;
+                    if (heartChargeAccumulator >= 6) aiUnlocked = true; // チャージ累計6以上
                 } else if (currentShape === 'circle' && !senrinUnlocked) {
                     if (circleColorSequence.length === 0 || circleColorSequence[circleColorSequence.length - 1] !== currentColor) {
                         circleColorSequence.push(currentColor);
@@ -876,15 +853,35 @@
                     if (new Set(circleColorSequence).size >= 4) senrinUnlocked = true;
                 } else if (currentShape === 'willow' && !kamuroUnlocked) {
                     willowChargeAccumulator += level;
-                    if (willowChargeAccumulator >= 10) kamuroUnlocked = true;
+                    if (willowChargeAccumulator >= 8) kamuroUnlocked = true; // チャージ累計8以上
                 } else if (currentShape === 'peony' && !mangekyoUnlocked) {
                     peonyChargeAccumulator += level;
-                    if (peonyChargeAccumulator >= 12) mangekyoUnlocked = true;
+                    if (peonyChargeAccumulator >= 8) mangekyoUnlocked = true; // チャージ累計8以上
+                } else if (currentShape === 'smile') {
+                    // ニコちゃんマークのLv4/Lv5で「菊」「牡丹」「シダレヤナギ」「ハート」の累計チャージに加算
+                    const addValue = (level === 4) ? 1 : (level === 5 ? 2 : 0);
+                    if (addValue > 0) {
+                        heartChargeAccumulator += addValue;
+                        if (heartChargeAccumulator >= 6) aiUnlocked = true;
+
+                        willowChargeAccumulator += addValue;
+                        if (willowChargeAccumulator >= 8) kamuroUnlocked = true;
+
+                        peonyChargeAccumulator += addValue;
+                        if (peonyChargeAccumulator >= 8) mangekyoUnlocked = true;
+
+                        for (let k = 0; k < addValue; k++) {
+                            const dummyColor = ALL_PALETTE_COLORS[(circleColorSequence.length + k) % ALL_PALETTE_COLORS.length];
+                            if (circleColorSequence.length === 0 || circleColorSequence[circleColorSequence.length - 1] !== dummyColor) {
+                                circleColorSequence.push(dummyColor);
+                            }
+                        }
+                        if (new Set(circleColorSequence).size >= 4) senrinUnlocked = true;
+                    }
                 }
 
-                // Check non-special 20% variations
                 if (shapeToLaunch === 'star') {
-                    if (Math.random() < 0.1) isSaturn = true;
+                    if (level < 5 && Math.random() < 0.1) isSaturn = true;
                 } else if (shapeToLaunch === 'smile') {
                     if (Math.random() < 0.2) isButterfly = true;
                 } else if (shapeToLaunch === 'circle') {
@@ -905,10 +902,10 @@
                 isSaturn: isSaturn,
                 isButterfly: isButterfly,
                 isOval: isOval,
+                senrinIndex: currentSenrinIndex,
                 played: false
             });
 
-            // Play Launch Whistle Audio
             sounds.playWhistle();
 
             if (shapeToLaunch === 'kamuro') {
@@ -931,13 +928,12 @@
                 }, 560);
                 fireworkCount += 3;
             } else {
-                fireworks.push(new Firework(targetX, targetY, level, shapeToLaunch, currentColor, isSpecial, isSaturn, isButterfly, isOval));
+                fireworks.push(new Firework(targetX, targetY, level, shapeToLaunch, currentColor, isSpecial, isSaturn, isButterfly, isOval, currentSenrinIndex));
                 fireworkCount++;
             }
             
             inactivityTimer = 0;
 
-            // Cooldown logic: Special fireworks have fixed 3.0s interval
             let baseCooldown = level * 0.6;
             if (isSpecial) {
                 baseCooldown = 3.0;
@@ -952,7 +948,7 @@
 
         // --- CLASSES ---
         class Firework {
-            constructor(targetX, targetY, level, shape, colorId, isSpecial = false, isSaturn = false, isButterfly = false, isOval = false) {
+            constructor(targetX, targetY, level, shape, colorId, isSpecial = false, isSaturn = false, isButterfly = false, isOval = false, senrinIndex = 0) {
                 this.startX = targetX + (Math.random() - 0.5) * (isSpecial ? 0 : 30);
                 this.startY = height + 10;
                 this.x = this.startX;
@@ -966,6 +962,7 @@
                 this.isSaturn = isSaturn;
                 this.isButterfly = isButterfly;
                 this.isOval = isOval;
+                this.senrinIndex = senrinIndex;
 
                 const distance = Math.hypot(targetX - this.x, targetY - this.y);
                 this.speed = Math.min(22, distance / 26);
@@ -1012,7 +1009,7 @@
             explode() {
                 this.exploded = true;
 
-                sounds.playExplosion(this.isSpecial);
+                sounds.playExplosion(this.isSpecial, this.level);
 
                 if (this.isSpecial) {
                     const cheers = ['＼ たまや～！ ／', '＼ かぎや～！ ／', '＼ 日本一～！ ／', '＼ 玉や～！ ／'];
@@ -1029,12 +1026,12 @@
                     updateScoreDisplay();
                 }
 
-                createExplosionParticles(this.x, this.y, this.level, this.shape, this.colorConfig, this.isSaturn, this.isButterfly, this.isOval);
+                createExplosionParticles(this.x, this.y, this.level, this.shape, this.colorConfig, this.isSaturn, this.isButterfly, this.isOval, this.senrinIndex);
             }
         }
 
         class Particle {
-            constructor(x, y, vx, vy, color, size, decay, sparkle = false, gravity = 0.04, friction = 0.98) {
+            constructor(x, y, vx, vy, color, size, decay, sparkle = false, gravity = 0.04, friction = 0.98, isWandering = false) {
                 this.x = x;
                 this.y = y;
                 this.vx = vx;
@@ -1046,12 +1043,18 @@
                 this.sparkle = sparkle;
                 this.gravity = gravity;
                 this.friction = friction;
+                this.isWandering = isWandering;
             }
 
             update() {
                 this.vx *= this.friction;
                 this.vy *= this.friction;
                 this.vy += this.gravity;
+
+                if (this.isWandering) {
+                    this.vx += (Math.random() - 0.5) * 0.45;
+                    this.vy += (Math.random() - 0.5) * 0.45;
+                }
 
                 this.x += this.vx;
                 this.y += this.vy;
@@ -1079,13 +1082,12 @@
         }
 
         // --- EXPLOSION SHAPES GENERATOR ---
-        function createExplosionParticles(x, y, level, shape, colorConfig, isSaturn = false, isButterfly = false, isOval = false) {
+        function createExplosionParticles(x, y, level, shape, colorConfig, isSaturn = false, isButterfly = false, isOval = false, senrinIndex = 0) {
             const particleCount = 40 + level * 35;
             const baseSpeed = 2 + level * 1.8;
             const colors = colorConfig.colors;
 
             if (shape === 'starmine') {
-                // --- SPECIAL "特大スターマイン" (SUPER STARMINE) FIREWORK ---
                 const layerColors = ['#ff79c6', '#50fa7b', '#ffb86c', '#8be9fd'];
                 const layerRatios = [1.6, 1.25, 0.9, 0.6];
 
@@ -1111,7 +1113,6 @@
                 }
 
             } else if (shape === 'mangekyo') {
-                // --- SPECIAL "万華鏡" (MANGEKYO) FIREWORK ---
                 const mirrors = 8;
                 const dotsPerBranch = 16 + level * 4;
                 const mColors = ['#8be9fd', '#ff79c6', '#bd93f9', '#50fa7b', '#f1fa8c', '#ffb86c'];
@@ -1137,7 +1138,6 @@
                 }
 
             } else if (shape === 'kamuro') {
-                // --- SPECIAL "冠" (KAMURO) FIREWORK ---
                 const kamuroCount = particleCount * 2.2;
                 const goldColors = ['#f1fa8c', '#ffb86c', '#ffffff', '#ffd700'];
 
@@ -1156,36 +1156,42 @@
                 }
 
             } else if (shape === 'senrin') {
-                // --- SPECIAL "千輪菊" (SENRIN) FIREWORK ---
-                const subBloomCount = 10 + level * 3;
-                const spreadRadius = (70 + level * 25);
+                const growthStage = Math.max(1, senrinIndex);
+                const colorCount = Math.min(3, growthStage);
+                const subBloomCount = (8 + level * 2) + (growthStage * 3);
+                const spreadRadius = (70 + level * 25) * (1 + (growthStage - 1) * 0.28);
+
+                const activeSenrinColors = [];
+                for (let c = 0; c < colorCount; c++) {
+                    const colObj = COLORS[c % COLORS.length];
+                    activeSenrinColors.push(colObj.colors[0]);
+                }
 
                 for (let b = 0; b < subBloomCount; b++) {
                     const angle = Math.random() * Math.PI * 2;
                     const dist = Math.random() * spreadRadius;
                     const subX = x + Math.cos(angle) * dist;
                     const subY = y + Math.sin(angle) * dist;
-                    const bloomColor = COLORS[b % COLORS.length].colors[0];
+                    const bloomColor = activeSenrinColors[b % activeSenrinColors.length];
 
-                    const subDots = 18;
+                    const subDots = 18 + (growthStage * 2);
                     for (let i = 0; i < subDots; i++) {
                         const subAngle = (i / subDots) * Math.PI * 2;
-                        const speed = 1.2 + Math.random() * 1.5;
+                        const speed = (1.2 + Math.random() * 1.5) * (1 + (growthStage - 1) * 0.15);
                         const vx = Math.cos(subAngle) * speed;
                         const vy = Math.sin(subAngle) * speed;
 
-                        particles.push(new Particle(subX, subY, vx, vy, bloomColor, 2.2, 0.010, true, 0.02, 0.97));
+                        particles.push(new Particle(subX, subY, vx, vy, bloomColor, 2.2 + (growthStage * 0.3), 0.010, true, 0.02, 0.97));
                     }
                 }
 
-                for (let i = 0; i < 40; i++) {
+                for (let i = 0; i < 40 + (growthStage * 10); i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const speed = Math.random() * 3 + 1;
+                    const speed = Math.random() * (3 + growthStage) + 1;
                     particles.push(new Particle(x, y, Math.cos(angle)*speed, Math.sin(angle)*speed, '#ffffff', 3, 0.02, true));
                 }
 
             } else if (shape === 'ai') {
-                // --- SPECIAL "愛" KANJI FIREWORK ---
                 const aiStrokes = [
                     [{x: -0.2, y: -0.8}, {x: 0.2, y: -0.8}],
                     [{x: -0.4, y: -0.6}, {x: 0.4, y: -0.6}],
@@ -1230,7 +1236,21 @@
                 }
 
             } else if (shape === 'star') {
-                if (isSaturn) {
+                if (level === 5) {
+                    const shuffled = [...ALL_PALETTE_COLORS].sort(() => 0.5 - Math.random());
+                    const wanderColors = [shuffled[0], shuffled[1], shuffled[2]];
+
+                    const wanderCount = particleCount * 1.6;
+                    for (let i = 0; i < wanderCount; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = (0.4 + Math.random() * 1.3) * baseSpeed * 1.2;
+                        const vx = Math.cos(angle) * speed;
+                        const vy = Math.sin(angle) * speed;
+                        const color = wanderColors[i % 3];
+
+                        particles.push(new Particle(x, y, vx, vy, color, 2.8, 0.004, true, 0.008, 0.988, true));
+                    }
+                } else if (isSaturn) {
                     const planetColor = colors[0];
                     const ringColor = '#f1fa8c';
 
@@ -1326,36 +1346,68 @@
                 }
 
             } else {
-                for (let i = 0; i < particleCount; i++) {
-                    let angle, speedMod = 1.0;
-                    const color = colors[Math.floor(Math.random() * colors.length)];
+                if (shape === 'heart' && level >= 4) {
+                    const layerCount = (level === 4) ? 2 : 3;
+                    const baseHeartCount = Math.floor(particleCount * 0.8);
 
-                    if (shape === 'heart') {
-                        const t = (i / particleCount) * Math.PI * 2;
-                        const hx = 16 * Math.pow(Math.sin(t), 3);
-                        const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-                        angle = Math.atan2(hy, hx);
-                        speedMod = Math.hypot(hx, hy) / 16;
-                    } else if (shape === 'peony') {
-                        angle = Math.random() * Math.PI * 2;
-                        speedMod = Math.random() * 1.2;
-                    } else {
-                        angle = (i / particleCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.1;
-                        speedMod = 0.9 + Math.random() * 0.2;
+                    for (let l = 0; l < layerCount; l++) {
+                        const scaleMult = 1.0 - (l * 0.32);
+                        const rotAngle = (l === 1) ? 0.25 : (l === 2 ? -0.25 : 0);
+                        const layerColor = colors[l % colors.length];
+
+                        for (let i = 0; i < baseHeartCount; i++) {
+                            const t = (i / baseHeartCount) * Math.PI * 2;
+                            let hx = 16 * Math.pow(Math.sin(t), 3);
+                            let hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+
+                            if (rotAngle !== 0) {
+                                const rx = hx * Math.cos(rotAngle) - hy * Math.sin(rotAngle);
+                                const ry = hx * Math.sin(rotAngle) + hy * Math.cos(rotAngle);
+                                hx = rx;
+                                hy = ry;
+                            }
+
+                            const angle = Math.atan2(hy, hx);
+                            const speedMod = (Math.hypot(hx, hy) / 16) * scaleMult;
+
+                            const vx = Math.cos(angle) * baseSpeed * speedMod;
+                            const vy = Math.sin(angle) * baseSpeed * speedMod;
+
+                            particles.push(new Particle(x, y, vx, vy, layerColor, 2.2 + level * 0.2, 0.009, Math.random() < 0.4));
+                        }
                     }
+                } else {
+                    for (let i = 0; i < particleCount; i++) {
+                        let angle, speedMod = 1.0;
+                        const color = colors[Math.floor(Math.random() * colors.length)];
 
-                    let vx = Math.cos(angle) * baseSpeed * speedMod;
-                    let vy = Math.sin(angle) * baseSpeed * speedMod;
+                        if (shape === 'heart') {
+                            const t = (i / particleCount) * Math.PI * 2;
+                            const hx = 16 * Math.pow(Math.sin(t), 3);
+                            const hy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                            angle = Math.atan2(hy, hx);
+                            speedMod = Math.hypot(hx, hy) / 16;
+                        } else if (shape === 'peony') {
+                            angle = Math.random() * Math.PI * 2;
+                            speedMod = Math.random() * 1.2;
+                        } else {
+                            angle = (i / particleCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.1;
+                            speedMod = 0.9 + Math.random() * 0.2;
+                        }
 
-                    if (isOval) {
-                        vx *= 1.8;
-                        vy *= 0.6;
+                        let vx = Math.cos(angle) * baseSpeed * speedMod;
+                        let vy = Math.sin(angle) * baseSpeed * speedMod;
+
+                        if (isOval) {
+                            vx *= 1.8;
+                            vy *= 0.6;
+                        }
+
+                        const size = Math.random() * 2 + 1.5 + level * 0.3;
+                        const decay = Math.random() * 0.012 + 0.008 - (level * 0.001);
+
+                        particles.push(new Particle(x, y, vx, vy, color, size, decay, Math.random() < 0.4));
                     }
-
-                    const size = Math.random() * 2 + 1.5 + level * 0.3;
-                    const decay = Math.random() * 0.012 + 0.008 - (level * 0.001);
-
-                    particles.push(new Particle(x, y, vx, vy, color, size, decay, Math.random() < 0.4));
                 }
             }
         }
@@ -1445,7 +1497,6 @@
 
         // --- RENDER FUNCTIONS ---
         function render() {
-            // Night Sky Gradient
             const gradient = ctx.createLinearGradient(0, 0, 0, height);
             gradient.addColorStop(0, '#020208');
             gradient.addColorStop(0.6, '#080820');
@@ -1453,7 +1504,6 @@
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
 
-            // Draw Stars
             ctx.fillStyle = '#ffffff';
             for (let s of stars) {
                 s.alpha += (Math.random() - 0.5) * s.speed;
@@ -1465,7 +1515,6 @@
             }
             ctx.globalAlpha = 1.0;
 
-            // Update & Draw Fireworks
             for (let i = fireworks.length - 1; i >= 0; i--) {
                 const fw = fireworks[i];
                 fw.update();
@@ -1473,7 +1522,6 @@
                 if (fw.exploded) fireworks.splice(i, 1);
             }
 
-            // Update & Draw Particles
             ctx.save();
             ctx.globalCompositeOperation = 'lighter';
             for (let i = particles.length - 1; i >= 0; i--) {
@@ -1484,7 +1532,6 @@
             }
             ctx.restore();
 
-            // Render Charging UI Indicator
             if (isCharging && cooldownTimer <= 0 && !isReplaying) {
                 drawChargeRing(touchPos.x, touchPos.y, currentChargeLevel);
             }
@@ -1497,7 +1544,7 @@
             
             const radius = 20 + level * 8;
             const isStarmineReady = (currentShape === 'circle' && starmineUnlocked && level === 5);
-            const isAiReady = (currentShape === 'heart' && aiUnlocked && level === 5);
+            const isAiReady = (currentShape === 'heart' && aiUnlocked && level >= 4);
             const isSenrinReady = (currentShape === 'circle' && senrinUnlocked && level >= 3 && !starmineUnlocked);
             const isKamuroReady = (currentShape === 'willow' && kamuroUnlocked && level >= 4);
             const isMangekyoReady = (currentShape === 'peony' && mangekyoUnlocked && level >= 4);
@@ -1512,7 +1559,7 @@
                 labelText = '「愛」発動！';
                 strokeStyle = 'rgba(255, 80, 160, 0.9)';
             } else if (isSenrinReady) {
-                labelText = '「千輪菊」発動！';
+                labelText = `「千輪菊」発動！(Lv.${senrinCastCount + 1})`;
                 strokeStyle = 'rgba(255, 180, 50, 0.9)';
             } else if (isKamuroReady) {
                 labelText = '「冠」発動！';
@@ -1520,17 +1567,24 @@
             } else if (isMangekyoReady) {
                 labelText = '「万華鏡」発動！';
                 strokeStyle = 'rgba(80, 250, 220, 0.9)';
+            } else if (currentShape === 'star' && level === 5) {
+                labelText = '「飛遊星」発動！';
+                strokeStyle = 'rgba(255, 230, 100, 0.95)';
+            } else if (currentShape === 'heart' && level === 4) {
+                labelText = 'ダブルハート';
+            } else if (currentShape === 'heart' && level === 5) {
+                labelText = 'トリプルハート';
             }
 
             ctx.beginPath();
             ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.strokeStyle = strokeStyle;
-            ctx.lineWidth = (isStarmineReady || isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady) ? 5 : 3;
+            ctx.lineWidth = (isStarmineReady || isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady || (currentShape === 'star' && level === 5)) ? 5 : 3;
             ctx.stroke();
 
             ctx.beginPath();
             ctx.arc(x, y, 6 + level * 2, 0, Math.PI * 2);
-            ctx.fillStyle = (isStarmineReady || isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady) ? '#ffb86c' : 'rgba(255, 255, 255, 0.9)';
+            ctx.fillStyle = (isStarmineReady || isAiReady || isSenrinReady || isKamuroReady || isMangekyoReady || (currentShape === 'star' && level === 5)) ? '#ffb86c' : 'rgba(255, 255, 255, 0.9)';
             ctx.shadowColor = '#ff79c6';
             ctx.shadowBlur = 15;
             ctx.fill();
